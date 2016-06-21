@@ -2553,7 +2553,7 @@ do {                                                                 \
     ubuf[0] = '\0';                                                  \
   }                                                                  \
                                                                      \
-  check_str_eq(expected, #prop, expected->prop, ubuf);               \
+  if (!check_str_eq(expected, #prop, expected->prop, ubuf)) return 0;\
 } while(0)
 
 int
