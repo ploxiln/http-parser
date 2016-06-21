@@ -1,7 +1,10 @@
-HTTP Parser
+HTTP/RTSP Parser
 ===========
 
-[![Build Status](https://api.travis-ci.org/nodejs/http-parser.svg?branch=master)](https://travis-ci.org/nodejs/http-parser)
+**This is a fork of [http-parser](https://github.com/nodejs/http-parser) to add support for RTSP.**
+
+Original README
+-----
 
 This is a parser for HTTP messages written in C. It parses both requests and
 responses. The parser is designed to be used in performance HTTP
@@ -36,6 +39,7 @@ Usage
 One `http_parser` object is used per TCP connection. Initialize the struct
 using `http_parser_init()` and set the callbacks. That might look something
 like this for a request parser:
+
 ```c
 http_parser_settings settings;
 settings.on_url = my_url_callback;
@@ -148,6 +152,7 @@ callback in a threadsafe manner. This allows http-parser to be used in
 multi-threaded contexts.
 
 Example:
+
 ```c
  typedef struct {
   socket_t sock;
