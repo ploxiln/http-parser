@@ -72,6 +72,7 @@ struct message {
 
   const char *upgrade; // upgraded body
 
+  unsigned char rtsp;
   unsigned short http_major;
   unsigned short http_minor;
 
@@ -1154,6 +1155,63 @@ const struct message requests[] =
   ,.body= ""
   }
 
+#define RTSP_PLAY_REQUEST 42
+, {.name= "rtsp play request"
+  ,.type= HTTP_REQUEST
+  ,.raw= "PLAY rtsp://example.com/media.mp4 RTSP/1.0\r\n"
+         "CSeq: 4\r\n"
+         "Range: npt=5-20\r\n"
+         "Session: 12345678\r\n"
+         "\r\n"
+  ,.should_keep_alive= TRUE
+  ,.message_complete_on_eof= FALSE
+  ,.rtsp = 1
+  ,.http_major= 1
+  ,.http_minor= 0
+  ,.method= HTTP_PLAY
+  ,.request_path= "/media.mp4"
+  ,.request_url= "rtsp://example.com/media.mp4"
+  ,.query_string= ""
+  ,.fragment= ""
+  ,.num_headers= 3
+  ,.headers= { { "CSeq", "4" }
+             , { "Range", "npt=5-20" }
+             , { "Session", "12345678" }
+             }
+  ,.body= ""
+  }
+
+#define RTSP_GET_PARAM_REQUEST 43
+, {.name= "rtsp get-parameter request"
+  ,.type= HTTP_REQUEST
+  ,.raw= "GET_PARAMETER rtsp://example.com/fizzle/foo RTSP/1.0\r\n"
+         "CSeq: 431\r\n"
+         "Content-Type: text/parameters\r\n"
+         "Session: 12345678\r\n"
+         "Content-Length: 26\r\n"
+         "\r\n"
+         "packets_received\r\n"
+         "jitter\r\n"
+  ,.should_keep_alive= TRUE
+  ,.message_complete_on_eof= FALSE
+  ,.rtsp = 1
+  ,.http_major= 1
+  ,.http_minor= 0
+  ,.method= HTTP_GETPARAMETER
+  ,.request_path= "/fizzle/foo"
+  ,.request_url= "rtsp://example.com/fizzle/foo"
+  ,.query_string= ""
+  ,.fragment= ""
+  ,.num_headers= 4
+  ,.headers= { { "CSeq", "431" }
+             , { "Content-Type", "text/parameters" }
+             , { "Session", "12345678" }
+             , { "Content-Length", "26" }
+             }
+  ,.body= "packets_received\r\n"
+          "jitter\r\n"
+  }
+
 , {.name= NULL } /* sentinel */
 };
 
@@ -1933,6 +1991,57 @@ const struct message responses[] =
   ,.chunk_lengths= { 2, 2 }
   }
 
+#define RTSP_OK_RESPONSE 28
+, {.name= "RTSP OK response"
+  ,.type= HTTP_RESPONSE
+  ,.raw= "RTSP/1.0 200 OK\r\n"
+         "CSeq: 4\r\n"
+         "Session: 12345678\r\n"
+         "RTP-Info: url=rtsp://example.com/media.mp4/streamid=0;seq=9810092;rtptime=3450012\r\n"
+         "\r\n"
+  ,.should_keep_alive= TRUE
+  ,.message_complete_on_eof= FALSE
+  ,.rtsp = 1
+  ,.http_major= 1
+  ,.http_minor= 0
+  ,.status_code= 200
+  ,.response_status= "OK"
+  ,.num_headers= 3
+  ,.headers= { { "CSeq", "4" }
+             , { "Session", "12345678" }
+             , { "RTP-Info", "url=rtsp://example.com/media.mp4/streamid=0;seq=9810092;rtptime=3450012" }
+             }
+  ,.body_size= 0
+  ,.body= ""
+  }
+
+#define RTSP_PARAMETERS_RESPONSE 29
+, {.name= "RTSP get-parameters response"
+  ,.type= HTTP_RESPONSE
+  ,.raw= "RTSP/1.0 200 OK\r\n"
+         "CSeq: 431\r\n"
+         "Content-Length: 38\r\n"
+         "Content-Type: text/parameters\r\n"
+         "\r\n"
+         "packets_received: 10\r\n"
+         "jitter: 0.3838\r\n"
+  ,.should_keep_alive= TRUE
+  ,.message_complete_on_eof= FALSE
+  ,.rtsp = 1
+  ,.http_major= 1
+  ,.http_minor= 0
+  ,.status_code= 200
+  ,.response_status= "OK"
+  ,.num_headers= 3
+  ,.headers= { { "CSeq", "431" }
+             , { "Content-Length", "38" }
+             , { "Content-Type", "text/parameters" }
+             }
+  ,.body_size= 38
+  ,.body= "packets_received: 10\r\n"
+          "jitter: 0.3838\r\n"
+  }
+
 , {.name= NULL } /* sentinel */
 };
 
@@ -2102,6 +2211,7 @@ headers_complete_cb (http_parser *p)
   messages[num_messages].status_code = parser->status_code;
   messages[num_messages].http_major = parser->http_major;
   messages[num_messages].http_minor = parser->http_minor;
+  messages[num_messages].rtsp = parser->rtsp;
   messages[num_messages].headers_complete_cb_called = TRUE;
   messages[num_messages].should_keep_alive = http_should_keep_alive(parser);
   return 0;
@@ -2564,6 +2674,7 @@ message_eq (int index, int connect, const struct message *expected)
 
   MESSAGE_CHECK_NUM_EQ(expected, m, http_major);
   MESSAGE_CHECK_NUM_EQ(expected, m, http_minor);
+  MESSAGE_CHECK_NUM_EQ(expected, m, rtsp);
 
   if (expected->type == HTTP_REQUEST) {
     MESSAGE_CHECK_NUM_EQ(expected, m, method);
@@ -4234,6 +4345,7 @@ main (void)
     //"CONNECT", //CONNECT can't be tested like other methods, it's a tunnel
     "OPTIONS",
     "TRACE",
+    /* WebDAV */
     "COPY",
     "LOCK",
     "MKCOL",
@@ -4246,19 +4358,35 @@ main (void)
     "REBIND",
     "UNBIND",
     "ACL",
+    /* subversion */
     "REPORT",
     "MKACTIVITY",
     "CHECKOUT",
     "MERGE",
+    /* upnp */
     "M-SEARCH",
     "NOTIFY",
     "SUBSCRIBE",
     "UNSUBSCRIBE",
+    /* RFC-5789 */
     "PATCH",
     "PURGE",
+    /* CalDAV */
     "MKCALENDAR",
+    /* RFC-2068, section 19.6.1.2 */
     "LINK",
     "UNLINK",
+    /* RTSP/1.0 */
+    "DESCRIBE",
+    "ANNOUNCE",
+    "GET_PARAMETER",
+    "SET_PARAMETER",
+    "PAUSE",
+    "PLAY",
+    "RECORD",
+    "REDIRECT",
+    "SETUP",
+    "TEARDOWN",
     0 };
   const char **this_method;
   for (this_method = all_methods; *this_method; this_method++) {
