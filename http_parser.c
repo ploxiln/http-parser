@@ -281,11 +281,15 @@ enum state
 
   , s_start_req_or_res
   , s_res_or_resp_H
+  , s_res_or_resp_R
   , s_start_res
   , s_res_H
   , s_res_HT
   , s_res_HTT
   , s_res_HTTP
+  , s_res_R
+  , s_res_RT
+  , s_res_RTS
   , s_res_http_major
   , s_res_http_dot
   , s_res_http_minor
@@ -316,6 +320,9 @@ enum state
   , s_req_http_HT
   , s_req_http_HTT
   , s_req_http_HTTP
+  , s_req_http_R
+  , s_req_http_RT
+  , s_req_http_RTS
   , s_req_http_major
   , s_req_http_dot
   , s_req_http_minor
@@ -724,11 +731,14 @@ reexecute:
         if (ch == CR || ch == LF)
           break;
         parser->flags = 0;
+        parser->rtsp = 0;
         parser->content_length = ULLONG_MAX;
 
         if (ch == 'H') {
           UPDATE_STATE(s_res_or_resp_H);
-
+          CALLBACK_NOTIFY(message_begin);
+        } else if (ch == 'R') {
+          UPDATE_STATE(s_res_or_resp_R);
           CALLBACK_NOTIFY(message_begin);
         } else {
           parser->type = HTTP_REQUEST;
@@ -756,14 +766,40 @@ reexecute:
         }
         break;
 
+      case s_res_or_resp_R:
+        if (ch == 'T') {
+          parser->rtsp = 1;
+          parser->content_length = 0;
+          parser->type = HTTP_RESPONSE;
+          UPDATE_STATE(s_res_RT);
+        } else {
+          if (UNLIKELY(ch != 'E')) {
+            SET_ERRNO(HPE_INVALID_CONSTANT);
+            goto error;
+          }
+
+          parser->type = HTTP_REQUEST;
+          parser->method = HTTP_REPORT;
+          parser->index = 2;
+          UPDATE_STATE(s_req_method);
+        }
+        break;
+
       case s_start_res:
       {
         parser->flags = 0;
+        parser->rtsp = 0;
         parser->content_length = ULLONG_MAX;
 
         switch (ch) {
           case 'H':
             UPDATE_STATE(s_res_H);
+            break;
+
+          case 'R':
+            parser->rtsp = 1;
+            parser->content_length = 0;
+            UPDATE_STATE(s_res_R);
             break;
 
           case CR:
@@ -797,6 +833,21 @@ reexecute:
       case s_res_HTTP:
         STRICT_CHECK(ch != '/');
         UPDATE_STATE(s_res_http_major);
+        break;
+
+      case s_res_R:
+        STRICT_CHECK(ch != 'T');
+        UPDATE_STATE(s_res_RT);
+        break;
+
+      case s_res_RT:
+        STRICT_CHECK(ch != 'S');
+        UPDATE_STATE(s_res_RTS);
+        break;
+
+      case s_res_RTS:
+        STRICT_CHECK(ch != 'P');
+        UPDATE_STATE(s_res_HTTP);
         break;
 
       case s_res_http_major:
@@ -923,6 +974,7 @@ reexecute:
         if (ch == CR || ch == LF)
           break;
         parser->flags = 0;
+        parser->rtsp = 0;
         parser->content_length = ULLONG_MAX;
 
         if (UNLIKELY(!IS_ALPHA(ch))) {
@@ -934,22 +986,29 @@ reexecute:
         parser->index = 1;
         switch (ch) {
           case 'A': parser->method = HTTP_ACL; break;
+                    /* or ANNOUNCE */
           case 'B': parser->method = HTTP_BIND; break;
           case 'C': parser->method = HTTP_CONNECT; /* or COPY, CHECKOUT */ break;
           case 'D': parser->method = HTTP_DELETE; break;
+                    /* or DESCRIBE */
           case 'G': parser->method = HTTP_GET; break;
+                    /* or GET_PARAMETER */
           case 'H': parser->method = HTTP_HEAD; break;
           case 'L': parser->method = HTTP_LOCK; /* or LINK */ break;
-          case 'M': parser->method = HTTP_MKCOL; /* or MOVE, MKACTIVITY, MERGE, M-SEARCH, MKCALENDAR */ break;
+          case 'M': parser->method = HTTP_MKCOL; break;
+                    /* or MOVE, MKACTIVITY, MERGE, M-SEARCH, MKCALENDAR */
           case 'N': parser->method = HTTP_NOTIFY; break;
           case 'O': parser->method = HTTP_OPTIONS; break;
-          case 'P': parser->method = HTTP_POST;
-            /* or PROPFIND|PROPPATCH|PUT|PATCH|PURGE */
-            break;
+          case 'P': parser->method = HTTP_POST; break;
+                    /* or PROPFIND, PROPPATCH, PUT, PATCH, PURGE, PLAY, PAUSE */
           case 'R': parser->method = HTTP_REPORT; /* or REBIND */ break;
+                    /* or RECORD, REDIRECT */
           case 'S': parser->method = HTTP_SUBSCRIBE; /* or SEARCH */ break;
+                    /* or SET_PARAMETER, SETUP */
           case 'T': parser->method = HTTP_TRACE; break;
-          case 'U': parser->method = HTTP_UNLOCK; /* or UNSUBSCRIBE, UNBIND, UNLINK */ break;
+                    /* or TEARDOWN */
+          case 'U': parser->method = HTTP_UNLOCK; break;
+                    /* or UNSUBSCRIBE, UNBIND, UNLINK */
           default:
             SET_ERRNO(HPE_INVALID_METHOD);
             goto error;
@@ -974,16 +1033,21 @@ reexecute:
           UPDATE_STATE(s_req_spaces_before_url);
         } else if (ch == matcher[parser->index]) {
           ; /* nada */
-        } else if ((ch >= 'A' && ch <= 'Z') || ch == '-') {
+        } else if ((ch >= 'A' && ch <= 'Z') || ch == '-' || ch == '_') {
 
           switch (parser->method << 16 | parser->index << 8 | ch) {
 #define XX(meth, pos, ch, new_meth) \
             case (HTTP_##meth << 16 | pos << 8 | ch): \
               parser->method = HTTP_##new_meth; break;
 
+            XX(ACL,       1, 'N', ANNOUNCE)
+            XX(DELETE,    2, 'S', DESCRIBE)
+            XX(GET,       3, '_', GETPARAMETER)
             XX(POST,      1, 'U', PUT)
             XX(POST,      1, 'A', PATCH)
             XX(POST,      1, 'R', PROPFIND)
+            XX(POST,      1, 'L', PLAY)
+            XX(PATCH,     2, 'U', PAUSE)
             XX(PUT,       2, 'R', PURGE)
             XX(CONNECT,   1, 'H', CHECKOUT)
             XX(CONNECT,   2, 'P', COPY)
@@ -993,7 +1057,12 @@ reexecute:
             XX(MKCOL,     2, 'A', MKACTIVITY)
             XX(MKCOL,     3, 'A', MKCALENDAR)
             XX(SUBSCRIBE, 1, 'E', SEARCH)
+            XX(SEARCH,    2, 'T', SETUP)
+            XX(SETUP,     3, '_', SETPARAMETER)
+            XX(TRACE,     1, 'E', TEARDOWN)
             XX(REPORT,    2, 'B', REBIND)
+            XX(REPORT,    2, 'C', RECORD)
+            XX(REPORT,    2, 'D', REDIRECT)
             XX(PROPFIND,  4, 'P', PROPPATCH)
             XX(LOCK,      1, 'I', LINK)
             XX(UNLOCK,    2, 'S', UNSUBSCRIBE)
@@ -1091,6 +1160,11 @@ reexecute:
           case 'H':
             UPDATE_STATE(s_req_http_H);
             break;
+          case 'R':
+            parser->rtsp = 1;
+            parser->content_length = 0;
+            UPDATE_STATE(s_req_http_R);
+            break;
           case ' ':
             break;
           default:
@@ -1117,6 +1191,21 @@ reexecute:
       case s_req_http_HTTP:
         STRICT_CHECK(ch != '/');
         UPDATE_STATE(s_req_http_major);
+        break;
+
+      case s_req_http_R:
+        STRICT_CHECK(ch != 'T');
+        UPDATE_STATE(s_req_http_RT);
+        break;
+
+      case s_req_http_RT:
+        STRICT_CHECK(ch != 'S');
+        UPDATE_STATE(s_req_http_RTS);
+        break;
+
+      case s_req_http_RTS:
+        STRICT_CHECK(ch != 'P');
+        UPDATE_STATE(s_req_http_HTTP);
         break;
 
       case s_req_http_major:
@@ -2065,6 +2154,8 @@ http_should_keep_alive (const http_parser *parser)
     if (parser->flags & F_CONNECTION_CLOSE) {
       return 0;
     }
+  } else if (parser->rtsp) {
+    return 1; // always for RTSP
   } else {
     /* HTTP/1.0 or earlier */
     if (!(parser->flags & F_CONNECTION_KEEP_ALIVE)) {

@@ -201,6 +201,17 @@ enum http_status
   /* RFC-2068, section 19.6.1.2 */  \
   XX(31, LINK,        LINK)         \
   XX(32, UNLINK,      UNLINK)       \
+  /* RTSP/1.0 */                    \
+  XX(33, DESCRIBE,    DESCRIBE)     \
+  XX(34, ANNOUNCE,    ANNOUNCE)     \
+  XX(35, GETPARAMETER, GET_PARAMETER) \
+  XX(36, SETPARAMETER, SET_PARAMETER) \
+  XX(37, PAUSE,       PAUSE)        \
+  XX(38, PLAY,        PLAY)         \
+  XX(39, RECORD,      RECORD)       \
+  XX(40, REDIRECT,    REDIRECT)     \
+  XX(41, SETUP,       SETUP)        \
+  XX(42, TEARDOWN,    TEARDOWN)     \
 
 enum http_method
   {
@@ -307,7 +318,8 @@ struct http_parser {
   unsigned short http_major;
   unsigned short http_minor;
   unsigned int status_code : 16; /* responses only */
-  unsigned int method : 8;       /* requests only */
+  unsigned int method : 7;       /* requests only */
+  unsigned int rtsp : 1;         /* not HTTP, actually RTSP ! */
   unsigned int http_errno : 7;
 
   /* 1 = Upgrade header was present and the parser has exited because of that.
