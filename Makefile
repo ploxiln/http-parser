@@ -61,14 +61,16 @@ CFLAGS_LIB = $(CFLAGS_FAST) -fPIC
 LDFLAGS_LIB = $(LDFLAGS) -shared
 
 INSTALL ?= install
-PREFIX ?= $(DESTDIR)/usr/local
-LIBDIR = $(PREFIX)/lib
-INCLUDEDIR = $(PREFIX)/include
+PREFIX ?= /usr/local
+LIBDIR     = $(DESTDIR)$(PREFIX)/lib
+INCLUDEDIR = $(DESTDIR)$(PREFIX)/include
 
 ifneq (darwin,$(PLATFORM))
 # TODO(bnoordhuis) The native SunOS linker expects -h rather than -soname...
 LDFLAGS_LIB += -Wl,-soname=$(SONAME)
 endif
+
+all: library package
 
 test: test_g test_fast
 	$(HELPER) ./test_g$(BINEXT)
@@ -107,10 +109,12 @@ test-valgrind: test_g
 libhttp_parser.o: http_parser.c http_parser.h Makefile
 	$(CC) $(CPPFLAGS_FAST) $(CFLAGS_LIB) -c http_parser.c -o libhttp_parser.o
 
-library: libhttp_parser.o
-	$(CC) $(LDFLAGS_LIB) -o $(LIBNAME) $<
+library: $(LIBNAME)
+$(LIBNAME): libhttp_parser.o
+	$(CC) $(LDFLAGS_LIB) -o $@ $<
 
-package: http_parser.o
+package: libhttp_parser.a
+libhttp_parser.a: http_parser.o
 	$(AR) rcs libhttp_parser.a http_parser.o
 
 url_parser: http_parser.o contrib/url_parser.c
@@ -128,26 +132,35 @@ parsertrace_g: http_parser_g.o contrib/parsertrace.c
 tags: http_parser.c http_parser.h test.c
 	ctags $^
 
-install: library
-	$(INSTALL) -D  http_parser.h $(INCLUDEDIR)/http_parser.h
-	$(INSTALL) -D $(LIBNAME) $(LIBDIR)/$(LIBNAME)
-	ln -s $(LIBDIR)/$(LIBNAME) $(LIBDIR)/$(SONAME)
-	ln -s $(LIBDIR)/$(LIBNAME) $(LIBDIR)/$(SOLIBNAME).$(SOEXT)
+install: library package
+	$(INSTALL) -d $(INCLUDEDIR)
+	$(INSTALL) -m 0644 http_parser.h $(INCLUDEDIR)/http_parser.h
+	$(INSTALL) -d $(LIBDIR)
+	$(INSTALL) -m 0644 $(LIBNAME) $(LIBDIR)/$(LIBNAME)
+	ln -sf $(LIBNAME) $(LIBDIR)/$(SONAME)
+	ln -sf $(LIBNAME) $(LIBDIR)/$(SOLIBNAME).$(SOEXT)
+	$(INSTALL) -m 0644 $(SOLIBNAME).a $(LIBDIR)/$(SOLIBNAME).a
 
-install-strip: library
-	$(INSTALL) -D  http_parser.h $(INCLUDEDIR)/http_parser.h
-	$(INSTALL) -D -s $(LIBNAME) $(LIBDIR)/$(LIBNAME)
-	ln -s $(LIBDIR)/$(LIBNAME) $(LIBDIR)/$(SONAME)
-	ln -s $(LIBDIR)/$(LIBNAME) $(LIBDIR)/$(SOLIBNAME).$(SOEXT)
+install-strip: library package
+	$(INSTALL) -d $(INCLUDEDIR)
+	$(INSTALL) -m 0644 http_parser.h $(INCLUDEDIR)/http_parser.h
+	$(INSTALL) -d $(LIBDIR)
+	$(INSTALL) -m 0644 -s $(LIBNAME) $(LIBDIR)/$(LIBNAME)
+	ln -sf $(LIBNAME) $(LIBDIR)/$(SONAME)
+	ln -sf $(LIBNAME) $(LIBDIR)/$(SOLIBNAME).$(SOEXT)
+	$(INSTALL) -m 0644 $(SOLIBNAME).a $(LIBDIR)/$(SOLIBNAME).a
 
 uninstall:
-	rm $(INCLUDEDIR)/http_parser.h
-	rm $(LIBDIR)/$(SONAME)
-	rm $(LIBDIR)/libhttp_parser.so
+	rm -f $(INCLUDEDIR)/http_parser.h
+	rm -f $(LIBDIR)/$(LIBNAME)
+	rm -f $(LIBDIR)/$(SONAME)
+	rm -f $(LIBDIR)/$(SOLIBNAME).$(SOEXT)
+	rm -f $(LIBDIR)/$(SOLIBNAME).a
 
 clean:
-	rm -f *.o *.a tags test test_fast test_g \
-		http_parser.tar libhttp_parser.so.* \
+	rm -f *.o *.a tags \
+		test_fast$(BINEXT) test_g$(BINEXT) bench \
+		http_parser.tar libhttp_parser.* \
 		url_parser url_parser_g parsertrace parsertrace_g \
 		*.exe *.exe.so
 

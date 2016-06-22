@@ -12,6 +12,7 @@ parsertrace_g
 *.mk
 *.Makefile
 *.so.*
+*.dylib
 *.exe.*
 *.exe
 *.a
