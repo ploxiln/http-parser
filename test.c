@@ -3983,7 +3983,7 @@ test_scan (const struct message *r1, const struct message *r2, const struct mess
     for (j = 2; j < total_len; j ++ ) {
       for (i = 1; i < j; i ++ ) {
 
-        if (ops % 1000 == 0)  {
+        if (ops % 4096 == 0)  {
           printf("\b\b\b\b%3.0f%%", 100 * (float)ops /(float)total_ops);
           fflush(stdout);
         }
