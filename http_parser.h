@@ -301,15 +301,13 @@ enum http_errno {
 
 struct http_parser {
   /** PRIVATE **/
-  unsigned int type : 2;         /* enum http_parser_type */
-  unsigned int init_type : 2;    /* enum http_parser_type */
-  unsigned int pad4 : 4;
-  unsigned int flags : 8;        /* F_* values from 'flags' enum; semi-public */
-  unsigned int state : 8;        /* enum state from http_parser.c */
-  unsigned int header_state : 7; /* enum header_state from http_parser.c */
-  unsigned int pad1 : 1;
-  unsigned int index : 7;        /* index into current matcher */
-  unsigned int lenient_http_headers : 1;
+  unsigned char type;         /* enum http_parser_type */
+  unsigned char flags;        /* F_* values from 'flags' enum; semi-public */
+  unsigned char state;        /* enum state from http_parser.c */
+  unsigned char header_state; /* enum header_state from http_parser.c */
+  unsigned char index;        /* index into current matcher */
+  unsigned char init_type : 3;/* enum http_parser_type */
+  unsigned char lenient_http_headers : 1;
 
   uint32_t nread;          /* # bytes read in various scenarios */
   uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */
