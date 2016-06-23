@@ -3,6 +3,21 @@ HTTP/RTSP Parser
 
 **This is a fork of [http-parser](https://github.com/nodejs/http-parser) to add support for RTSP.**
 
+You should call `http_parser_init()` with `HTTP_BOTH`, because in addition to the RTSP
+client sending requests to the server, the RTSP server can send requests to the client.
+Unlike upstream http-parser, the "parser type" is reset to the initial parser type
+(in this case `HTTP_BOTH`) after each message.
+
+You can check that the parsed message was RTSP (instead of HTTP) by checking the
+new `rtsp` member of `struct http_parser`.
+
+Interleaved RTSP transport, if you want to support it, does not start immediately
+after the SETUP response which confirms that interleaved transport (of RTP packets
+over the same tcp connection as the RTSP messages) will be used. You should return `2`
+from your `on_headers_complete()` callback after e.g. the corresponding PLAY response,
+to indicate to the parser it should initiate "upgrade" at that point (which lets you
+take over handling of the byte stream).
+
 Original README
 -----
 
