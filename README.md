@@ -1,9 +1,16 @@
 HTTP/RTSP Parser
-===========
+===============
 
 **This is a fork of [http-parser](https://github.com/nodejs/http-parser) to add support for RTSP.**
 
-You should call `http_parser_init()` with `HTTP_BOTH`, because in addition to the RTSP
+This fork had its master branch **rebased** (on nodejs/http-parser master) on 2017/09/26
+because some of the fixes that were in this fork were merged upstream as different commits.
+The original master branch of this fork is still available as branch `old_master`.
+
+RTSP tips
+---------
+
+You may want to call `http_parser_init()` with `HTTP_BOTH`, because in addition to the RTSP
 client sending requests to the server, the RTSP server can send requests to the client.
 Unlike upstream http-parser, the "parser type" is reset to the initial parser type
 (in this case `HTTP_BOTH`) after each message.
@@ -19,7 +26,7 @@ to indicate to the parser it should initiate "upgrade" at that point (which lets
 take over handling of the byte stream).
 
 Original README
------
+===============
 
 This is a parser for HTTP messages written in C. It parses both requests and
 responses. The parser is designed to be used in performance HTTP
