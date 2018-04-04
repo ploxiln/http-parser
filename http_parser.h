@@ -25,9 +25,9 @@ extern "C" {
 #endif
 
 /* Also update SONAME in the Makefile whenever you change these. */
-#define HTTP_PARSER_VERSION_MAJOR 2
-#define HTTP_PARSER_VERSION_MINOR 7
-#define HTTP_PARSER_VERSION_PATCH 1
+#define HTTP_PARSER_VERSION_MAJOR 3
+#define HTTP_PARSER_VERSION_MINOR 0
+#define HTTP_PARSER_VERSION_PATCH 0
 
 #include <stddef.h>
 #if defined(_WIN32) && !defined(__MINGW32__) && \
