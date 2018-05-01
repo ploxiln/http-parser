@@ -1425,12 +1425,13 @@ reexecute:
           }
         }
 
-        COUNT_HEADER_SIZE(p - start);
-
         if (p == data + len) {
           --p;
+          COUNT_HEADER_SIZE(p - start);
           break;
         }
+
+        COUNT_HEADER_SIZE(p - start);
 
         if (ch == ':') {
           UPDATE_STATE(s_header_value_discard_ws);
@@ -1720,10 +1721,10 @@ reexecute:
         }
         parser->header_state = h_state;
 
-        COUNT_HEADER_SIZE(p - start);
-
         if (p == data + len)
           --p;
+
+        COUNT_HEADER_SIZE(p - start);
         break;
       }
 
