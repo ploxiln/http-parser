@@ -2475,7 +2475,7 @@ http_parser_parse_url(const char *buf, size_t buflen, int is_connect,
   if (u->field_set & (1 << UF_PORT)) {
     uint16_t off;
     uint16_t len;
-    const char* p;
+    const char* c;
     const char* end;
     unsigned long v;
 
@@ -2486,9 +2486,9 @@ http_parser_parse_url(const char *buf, size_t buflen, int is_connect,
     /* NOTE: The characters are already validated and are in the [0-9] range */
     assert(off + len <= buflen && "Port number overflow");
     v = 0;
-    for (p = buf + off; p < end; p++) {
+    for (c = buf + off; c < end; c++) {
       v *= 10;
-      v += *p - '0';
+      v += *c - '0';
 
       /* Ports have a max value of 2^16 */
       if (v > 0xffff) {

@@ -52,7 +52,7 @@ CPPFLAGS_FAST = $(CPPFLAGS) -DHTTP_PARSER_STRICT=0
 CPPFLAGS_FAST += $(CPPFLAGS_FAST_EXTRA)
 CPPFLAGS_BENCH = $(CPPFLAGS_FAST)
 
-CFLAGS += -Wall -Wextra
+CFLAGS += -Wall -Wextra -Wshadow
 CFLAGS_DEBUG = $(CFLAGS) -O0 -g $(CFLAGS_DEBUG_EXTRA)
 CFLAGS_FAST = $(CFLAGS) -O3 $(CFLAGS_FAST_EXTRA)
 CFLAGS_BENCH = $(CFLAGS_FAST) -Wno-unused-parameter
@@ -82,7 +82,7 @@ test_g: http_parser_g.o test_g.o
 	$(CC) $(CFLAGS_DEBUG) $(LDFLAGS) http_parser_g.o test_g.o -o $@
 
 test_g.o: test.c http_parser.h Makefile
-	$(CC) $(CPPFLAGS_DEBUG) $(CFLAGS_DEBUG) -c test.c -o $@
+	$(CC) $(CPPFLAGS_DEBUG) $(CFLAGS_DEBUG) -Wno-shadow -c test.c -o $@
 
 http_parser_g.o: http_parser.c http_parser.h Makefile
 	$(CC) $(CPPFLAGS_DEBUG) $(CFLAGS_DEBUG) -c http_parser.c -o $@
@@ -91,7 +91,7 @@ test_fast: http_parser.o test.o http_parser.h
 	$(CC) $(CFLAGS_FAST) $(LDFLAGS) http_parser.o test.o -o $@
 
 test.o: test.c http_parser.h Makefile
-	$(CC) $(CPPFLAGS_FAST) $(CFLAGS_FAST) -c test.c -o $@
+	$(CC) $(CPPFLAGS_FAST) $(CFLAGS_FAST) -Wno-shadow -c test.c -o $@
 
 bench: http_parser.o bench.o
 	$(CC) $(CFLAGS_BENCH) $(LDFLAGS) http_parser.o bench.o -o $@
