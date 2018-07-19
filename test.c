@@ -2185,6 +2185,7 @@ int
 message_begin_cb (http_parser *p)
 {
   assert(p == &parser);
+  assert(!messages[num_messages].message_begin_cb_called);
   messages[num_messages].message_begin_cb_called = TRUE;
   return 0;
 }
@@ -4282,6 +4283,7 @@ main (void)
   test_simple_type("HTTP/11.1 200 OK\r\n\r\n", HPE_INVALID_VERSION, HTTP_RESPONSE);
   test_simple_type("HTTP/1.01 200 OK\r\n\r\n", HPE_INVALID_VERSION, HTTP_RESPONSE);
   test_simple_type("HTTP/1.1\t200 OK\r\n\r\n", HPE_INVALID_VERSION, HTTP_RESPONSE);
+  test_simple_type("\rHTTP/1.1\t200 OK\r\n\r\n", HPE_INVALID_VERSION, HTTP_RESPONSE);
 
   for (i = 0; i < ARRAY_SIZE(responses); i++) {
     test_message(&responses[i]);
