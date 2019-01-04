@@ -2842,7 +2842,6 @@ void
 test_preserve_data (void)
 {
   char my_data[] = "application-specific data";
-  http_parser parser;
   parser.data = my_data;
   http_parser_init(&parser, HTTP_REQUEST);
   if (parser.data != my_data) {
@@ -3631,7 +3630,6 @@ test_simple (const char *buf, enum http_errno err_expected)
 void
 test_invalid_header_content (int req, const char* str)
 {
-  http_parser parser;
   http_parser_init(&parser, req ? HTTP_REQUEST : HTTP_RESPONSE);
   size_t parsed;
   const char *buf;
@@ -3665,7 +3663,6 @@ test_invalid_header_field_content_error (int req)
 void
 test_invalid_header_field (int req, const char* str)
 {
-  http_parser parser;
   http_parser_init(&parser, req ? HTTP_REQUEST : HTTP_RESPONSE);
   size_t parsed;
   const char *buf;
@@ -3699,7 +3696,6 @@ test_invalid_header_field_token_error (int req)
 void
 test_double_content_length_error (int req)
 {
-  http_parser parser;
   http_parser_init(&parser, req ? HTTP_REQUEST : HTTP_RESPONSE);
   size_t parsed;
   const char *buf;
@@ -3726,7 +3722,6 @@ test_double_content_length_error (int req)
 void
 test_chunked_content_length_error (int req)
 {
-  http_parser parser;
   http_parser_init(&parser, req ? HTTP_REQUEST : HTTP_RESPONSE);
   size_t parsed;
   const char *buf;
@@ -3753,7 +3748,6 @@ test_chunked_content_length_error (int req)
 void
 test_header_cr_no_lf_error (int req)
 {
-  http_parser parser;
   http_parser_init(&parser, req ? HTTP_REQUEST : HTTP_RESPONSE);
   size_t parsed;
   const char *buf;
@@ -3804,7 +3798,6 @@ test_no_overflow_parse_url (void)
 void
 test_header_overflow_error (int req)
 {
-  http_parser parser;
   http_parser_init(&parser, req ? HTTP_REQUEST : HTTP_RESPONSE);
   size_t parsed;
   const char *buf;
@@ -3833,7 +3826,6 @@ test_header_overflow_error (int req)
 void
 test_header_nread_value ()
 {
-  http_parser parser;
   http_parser_init(&parser, HTTP_REQUEST);
   size_t parsed;
   const char *buf;
@@ -3848,7 +3840,6 @@ test_header_nread_value ()
 static void
 test_content_length_overflow (const char *buf, size_t buflen, int expect_ok)
 {
-  http_parser parser;
   http_parser_init(&parser, HTTP_RESPONSE);
   http_parser_execute(&parser, &settings_null, buf, buflen);
 
@@ -3895,7 +3886,6 @@ test_chunk_content_length_overflow_error (void)
 void
 test_no_overflow_long_body (int req, size_t length)
 {
-  http_parser parser;
   http_parser_init(&parser, req ? HTTP_REQUEST : HTTP_RESPONSE);
   size_t parsed;
   size_t i;
