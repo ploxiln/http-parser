@@ -23,7 +23,7 @@ HELPER ?=
 BINEXT ?=
 SOLIBNAME = libhttp_parser
 SOMAJOR = 3
-SOMINOR = 0
+SOMINOR = 1
 SOREV   = 0
 ifeq (darwin,$(PLATFORM))
 SOEXT ?= dylib
