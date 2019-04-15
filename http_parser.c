@@ -1321,9 +1321,9 @@ reexecute:
 
           switch (parser->header_state) {
             case h_general: {
-              size_t limit = data + len - p;
-              limit = MIN(limit, HTTP_MAX_HEADER_SIZE);
-              while (p+1 < data + limit && TOKEN(p[1])) {
+              size_t left = data + len - p;
+              const char* pe = p + MIN(left, HTTP_MAX_HEADER_SIZE);
+              while (p+1 < pe && TOKEN(p[1])) {
                 p++;
               }
               break;
@@ -1561,9 +1561,10 @@ reexecute:
           switch (h_state) {
             case h_general:
               {
-                const char* limit = p + MIN(data + len - p, HTTP_MAX_HEADER_SIZE);
+                size_t left = data + len - p;
+                const char* pe = p + MIN(left, HTTP_MAX_HEADER_SIZE);
 
-                for (; p != limit; p++) {
+                for (; p != pe; p++) {
                   ch = *p;
                   if (ch == CR || ch == LF) {
                     --p;
