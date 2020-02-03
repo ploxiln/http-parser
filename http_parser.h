@@ -234,6 +234,7 @@ enum flags
   , F_UPGRADE               = 1 << 5
   , F_SKIPBODY              = 1 << 6
   , F_CONTENTLENGTH         = 1 << 7
+  , F_TRANSFER_ENCODING     = 1 << 8
   };
 
 
@@ -280,6 +281,8 @@ enum flags
      "unexpected content-length header")                             \
   XX(INVALID_CHUNK_SIZE,                                             \
      "invalid character in chunk size header")                       \
+  XX(INVALID_TRANSFER_ENCODING,                                      \
+     "request has invalid transfer-encoding")                        \
   XX(INVALID_CONSTANT, "invalid constant string")                    \
   XX(INVALID_INTERNAL_STATE, "encountered unexpected internal state")\
   XX(STRICT, "strict mode assertion failed")                         \
@@ -302,12 +305,12 @@ enum http_errno {
 struct http_parser {
   /** PRIVATE **/
   unsigned char type;         /* enum http_parser_type */
-  unsigned char flags;        /* F_* values from 'flags' enum; semi-public */
   unsigned char state;        /* enum state from http_parser.c */
   unsigned char header_state; /* enum header_state from http_parser.c */
   unsigned char index;        /* index into current matcher */
-  unsigned char init_type : 3;/* enum http_parser_type */
-  unsigned char lenient_http_headers : 1;
+  unsigned int init_type            :  3; /* enum http_parser_type */
+  unsigned int lenient_http_headers :  1;
+  unsigned int flags                : 12; /* F_* values from 'flags' enum; semi-public */
 
   uint32_t nread;          /* # bytes read in various scenarios */
   uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */

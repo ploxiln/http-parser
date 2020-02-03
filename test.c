@@ -263,7 +263,6 @@ const struct message requests[] =
   ,.type= HTTP_REQUEST
   ,.raw= "POST /post_identity_body_world?q=search#hey HTTP/1.1\r\n"
          "Accept: */*\r\n"
-         "Transfer-Encoding: identity\r\n"
          "Content-Length: 5\r\n"
          "\r\n"
          "World"
@@ -276,10 +275,9 @@ const struct message requests[] =
   ,.fragment= "hey"
   ,.request_path= "/post_identity_body_world"
   ,.request_url= "/post_identity_body_world?q=search#hey"
-  ,.num_headers= 3
+  ,.num_headers= 2
   ,.headers=
     { { "Accept", "*/*" }
-    , { "Transfer-Encoding", "identity" }
     , { "Content-Length", "5" }
     }
   ,.body= "World"
@@ -1212,6 +1210,60 @@ const struct message requests[] =
           "jitter\r\n"
   }
 
+#define POST_MULTI_TE_LAST_CHUNKED 44
+, {.name= "post - multi coding transfer-encoding chunked body"
+  ,.type= HTTP_REQUEST
+  ,.raw= "POST / HTTP/1.1\r\n"
+         "Transfer-Encoding: deflate, chunked\r\n"
+         "\r\n"
+         "1e\r\nall your base are belong to us\r\n"
+         "0\r\n"
+         "\r\n"
+  ,.should_keep_alive= TRUE
+  ,.message_complete_on_eof= FALSE
+  ,.http_major= 1
+  ,.http_minor= 1
+  ,.method= HTTP_POST
+  ,.query_string= ""
+  ,.fragment= ""
+  ,.request_path= "/"
+  ,.request_url= "/"
+  ,.num_headers= 1
+  ,.headers=
+    { { "Transfer-Encoding" , "deflate, chunked" }
+    }
+  ,.body= "all your base are belong to us"
+  ,.num_chunks_complete= 2
+  ,.chunk_lengths= { 0x1e }
+  }
+
+#define POST_MULTI_LINE_TE_LAST_CHUNKED 45
+, {.name= "post - multi coding transfer-encoding chunked body"
+  ,.type= HTTP_REQUEST
+  ,.raw= "POST / HTTP/1.1\r\n"
+         "Transfer-Encoding: deflate,\r\n"
+         " chunked\r\n"
+         "\r\n"
+         "1e\r\nall your base are belong to us\r\n"
+         "0\r\n"
+         "\r\n"
+  ,.should_keep_alive= TRUE
+  ,.message_complete_on_eof= FALSE
+  ,.http_major= 1
+  ,.http_minor= 1
+  ,.method= HTTP_POST
+  ,.query_string= ""
+  ,.fragment= ""
+  ,.request_path= "/"
+  ,.request_url= "/"
+  ,.num_headers= 1
+  ,.headers=
+    { { "Transfer-Encoding" , "deflate, chunked" }
+    }
+  ,.body= "all your base are belong to us"
+  ,.num_chunks_complete= 2
+  ,.chunk_lengths= { 0x1e }
+  }
 };
 
 /* * R E S P O N S E S * */
@@ -2041,6 +2093,28 @@ const struct message responses[] =
           "jitter: 0.3838\r\n"
   }
 
+#define HTTP_200_MULTI_TE_NOT_LAST_CHUNKED 30
+, {.name= "HTTP 200 response with `chunked` being *not last* Transfer-Encoding"
+  ,.type= HTTP_RESPONSE
+  ,.raw= "HTTP/1.1 200 OK\r\n"
+         "Transfer-Encoding: chunked, identity\r\n"
+         "\r\n"
+         "2\r\n"
+         "OK\r\n"
+         "0\r\n"
+         "\r\n"
+  ,.should_keep_alive= FALSE
+  ,.message_complete_on_eof= TRUE
+  ,.http_major= 1
+  ,.http_minor= 1
+  ,.status_code= 200
+  ,.response_status= "OK"
+  ,.num_headers= 1
+  ,.headers= { { "Transfer-Encoding", "chunked, identity" }
+             }
+  ,.body= "2\r\nOK\r\n0\r\n\r\n"
+  ,.num_chunks_complete= 0
+  }
 };
 
 /* strnlen() is a POSIX.2008 addition. Can't rely on it being available so
@@ -3731,7 +3805,7 @@ test_chunked_content_length_error (int req)
   parsed = http_parser_execute(&parser, &settings_null, buf, strlen(buf));
   assert(parsed == strlen(buf));
 
-  buf = "Transfer-Encoding: chunked\r\nContent-Length: 1\r\n\r\n";
+  buf = "Transfer-Encoding: anything\r\nContent-Length: 1\r\n\r\n";
   size_t buflen = strlen(buf);
 
   parsed = http_parser_execute(&parser, &settings_null, buf, buflen);
@@ -4392,6 +4466,12 @@ main (void)
               "\r\n"
               "fooba",
               HPE_OK);
+
+  // Unknown Transfer-Encoding in request
+  test_simple("GET / HTTP/1.1\r\n"
+              "Transfer-Encoding: unknown\r\n"
+              "\r\n",
+              HPE_INVALID_TRANSFER_ENCODING);
 
   static const char *all_methods[] = {
     "DELETE",
