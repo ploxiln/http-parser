@@ -72,8 +72,10 @@ else
 LDFLAGS_LIB += -Wl,-soname=$(SONAME)
 endif
 
+## all: build library
 all: library package
 
+## test: build and run test suite, in both "strict" and "fast" mode
 test: test_g test_fast
 	$(HELPER) ./test_g$(BINEXT)
 	$(HELPER) ./test_fast$(BINEXT)
@@ -93,6 +95,7 @@ test_fast: http_parser.o test.o http_parser.h
 test.o: test.c http_parser.h Makefile
 	$(CC) $(CPPFLAGS_FAST) $(CFLAGS_FAST) -c test.c -o $@
 
+## bench: build and run benchmark
 bench: http_parser.o bench.o
 	$(CC) $(CFLAGS_BENCH) $(LDFLAGS) http_parser.o bench.o -o $@
 
@@ -115,6 +118,7 @@ library: $(LIBNAME)
 $(LIBNAME): libhttp_parser.o
 	$(CC) $(LDFLAGS_LIB) -o $@ $<
 
+## package: build .a static library archive
 package: libhttp_parser.a
 libhttp_parser.a: http_parser.o
 	$(AR) rcs libhttp_parser.a http_parser.o
@@ -131,9 +135,11 @@ parsertrace: http_parser.o contrib/parsertrace.c
 parsertrace_g: http_parser_g.o contrib/parsertrace.c
 	$(CC) $(CPPFLAGS_DEBUG) $(CFLAGS_DEBUG) $^ -o parsertrace_g$(BINEXT)
 
+## tags: generate ctags for vim navigation etc
 tags: http_parser.c http_parser.h test.c
 	ctags $^
 
+## install: install to LIBDIR and INCLUDEDIR
 install: library package
 	$(INSTALL) -d $(INCLUDEDIR)
 	$(INSTALL) -m 0644 http_parser.h $(INCLUDEDIR)/http_parser.h
@@ -159,6 +165,7 @@ uninstall:
 	rm -f $(LIBDIR)/$(SOLIBNAME).$(SOEXT)
 	rm -f $(LIBDIR)/$(SOLIBNAME).a
 
+## clean: remove all build/test artifacts
 clean:
 	rm -f *.o *.a tags \
 		test_fast$(BINEXT) test_g$(BINEXT) bench \
@@ -166,7 +173,11 @@ clean:
 		url_parser url_parser_g parsertrace parsertrace_g \
 		*.exe *.exe.so
 
+## help: list make targets
+help:
+	@sed -n -e 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':'
+
 contrib/url_parser.c:	http_parser.h
 contrib/parsertrace.c:	http_parser.h
 
-.PHONY: clean package test-run test-run-timed test-valgrind install install-strip uninstall
+.PHONY: help clean package test-run test-run-timed test-valgrind install install-strip uninstall
