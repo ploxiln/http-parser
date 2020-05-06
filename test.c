@@ -1839,7 +1839,7 @@ const struct message responses[] =
   ,.chunk_lengths= { 1 }
   }
 
-#define EMPTY_REASON_PHRASE_AFTER_SPACE 20
+#define EMPTY_REASON_PHRASE_AFTER_SPACE 21
 , {.name= "empty reason phrase after space"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 200 \r\n"
@@ -1855,7 +1855,7 @@ const struct message responses[] =
   ,.body= ""
   }
 
-#define CONTENT_LENGTH_X 21
+#define CONTENT_LENGTH_X 22
 , {.name= "Content-Length-X"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 200 OK\r\n"
@@ -1881,7 +1881,7 @@ const struct message responses[] =
   ,.chunk_lengths= { 2 }
   }
 
-#define HTTP_101_RESPONSE_WITH_UPGRADE_HEADER 22
+#define HTTP_101_RESPONSE_WITH_UPGRADE_HEADER 23
 , {.name= "HTTP 101 response with Upgrade header"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 101 Switching Protocols\r\n"
@@ -1903,7 +1903,7 @@ const struct message responses[] =
     }
   }
 
-#define HTTP_101_RESPONSE_WITH_UPGRADE_HEADER_AND_CONTENT_LENGTH 23
+#define HTTP_101_RESPONSE_WITH_UPGRADE_HEADER_AND_CONTENT_LENGTH 24
 , {.name= "HTTP 101 response with Upgrade and Content-Length header"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 101 Switching Protocols\r\n"
@@ -1929,7 +1929,7 @@ const struct message responses[] =
     }
   }
 
-#define HTTP_101_RESPONSE_WITH_UPGRADE_HEADER_AND_TRANSFER_ENCODING 24
+#define HTTP_101_RESPONSE_WITH_UPGRADE_HEADER_AND_TRANSFER_ENCODING 25
 , {.name= "HTTP 101 response with Upgrade and Transfer-Encoding header"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 101 Switching Protocols\r\n"
@@ -1962,7 +1962,7 @@ const struct message responses[] =
   ,.chunk_lengths= { 2, 2 }
   }
 
-#define HTTP_200_RESPONSE_WITH_UPGRADE_HEADER 25
+#define HTTP_200_RESPONSE_WITH_UPGRADE_HEADER 26
 , {.name= "HTTP 200 response with Upgrade header"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 200 OK\r\n"
@@ -1985,7 +1985,7 @@ const struct message responses[] =
     }
   }
 
-#define HTTP_200_RESPONSE_WITH_UPGRADE_HEADER_AND_CONTENT_LENGTH 26
+#define HTTP_200_RESPONSE_WITH_UPGRADE_HEADER_AND_CONTENT_LENGTH 27
 , {.name= "HTTP 200 response with Upgrade and Content-Length header"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 200 OK\r\n"
@@ -2010,7 +2010,7 @@ const struct message responses[] =
     }
   }
 
-#define HTTP_200_RESPONSE_WITH_UPGRADE_HEADER_AND_TRANSFER_ENCODING 27
+#define HTTP_200_RESPONSE_WITH_UPGRADE_HEADER_AND_TRANSFER_ENCODING 28
 , {.name= "HTTP 200 response with Upgrade and Transfer-Encoding header"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 200 OK\r\n"
@@ -2042,7 +2042,7 @@ const struct message responses[] =
   ,.chunk_lengths= { 2, 2 }
   }
 
-#define RTSP_OK_RESPONSE 28
+#define RTSP_OK_RESPONSE 29
 , {.name= "RTSP OK response"
   ,.type= HTTP_RESPONSE
   ,.raw= "RTSP/1.0 200 OK\r\n"
@@ -2066,7 +2066,7 @@ const struct message responses[] =
   ,.body= ""
   }
 
-#define RTSP_PARAMETERS_RESPONSE 29
+#define RTSP_PARAMETERS_RESPONSE 30
 , {.name= "RTSP get-parameters response"
   ,.type= HTTP_RESPONSE
   ,.raw= "RTSP/1.0 200 OK\r\n"
@@ -2093,7 +2093,7 @@ const struct message responses[] =
           "jitter: 0.3838\r\n"
   }
 
-#define HTTP_200_MULTI_TE_NOT_LAST_CHUNKED 30
+#define HTTP_200_MULTI_TE_NOT_LAST_CHUNKED 31
 , {.name= "HTTP 200 response with `chunked` being *not last* Transfer-Encoding"
   ,.type= HTTP_RESPONSE
   ,.raw= "HTTP/1.1 200 OK\r\n"
