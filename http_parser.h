@@ -315,7 +315,8 @@ struct http_parser {
   unsigned int flags                : 12; /* F_* values from 'flags' enum; semi-public */
 
   uint32_t nread;          /* # bytes read in various scenarios */
-  uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */
+  uint64_t content_length; /* # bytes in body */
+  /* (if no Content-Length header, ULLONG_MAX for HTTP, 0 for RTSP) */
 
   /** READ-ONLY **/
   unsigned short http_major;
