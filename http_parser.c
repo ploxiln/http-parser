@@ -2581,7 +2581,7 @@ http_parser_parse_url(const char *buf, size_t buflen, int is_connect,
     end = buf + off + len;
 
     /* NOTE: The characters are already validated and are in the [0-9] range */
-    assert(off + len <= buflen && "Port number overflow");
+    assert((size_t) (off + len) <= buflen && "Port number overflow");
     v = 0;
     for (c = buf + off; c < end; c++) {
       v *= 10;
